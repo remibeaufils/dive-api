@@ -9,6 +9,8 @@ import { UsersModule } from './users/users.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ConnectorsModule } from './connectors/connectors.module';
+import { StoresModule } from './stores/stores.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     UsersModule,
     ContextModule,
+    ConnectorsModule,
+    StoresModule,
   ],
   controllers: [AppController],
   providers: [

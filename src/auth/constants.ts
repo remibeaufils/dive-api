@@ -1,4 +1,4 @@
 export const jwtConstants = {
-  expirationTime: '600s',
-  cookieExpirationTime: '600',
+  expirationTime: '86400s',
+  cookieExpirationTime: '86400',
 };
