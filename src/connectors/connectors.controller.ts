@@ -8,15 +8,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Store } from 'src/stores/schemas/store.schema';
-import { StoresService } from 'src/stores/stores.service';
+import { StoreConfig } from 'src/store-config/schemas/store-config.schema';
+import { StoreConfigService } from 'src/store-config/store-config.service';
 import { Connector } from './schemas/connector.schema';
 
 @Controller('connectors')
 export class ConnectorsController {
   constructor(
     private readonly httpService: HttpService,
-    private readonly storesService: StoresService,
+    private readonly storesService: StoreConfigService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -54,7 +54,9 @@ export class ConnectorsController {
 
     // Get store config for this connector.
 
-    const store: Store = await this.storesService.findOneByUser(req.user.email);
+    const store: StoreConfig = await this.storesService.findOneByUser(
+      req.user.email,
+    );
 
     const config: Connector = store
       ? store.connectors.find(({ id }) => id === req.params.id)
@@ -109,7 +111,9 @@ export class ConnectorsController {
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async deleteConnector(@Request() req, @Res() res) {
-    const store: Store = await this.storesService.findOneByUser(req.user.email);
+    const store: StoreConfig = await this.storesService.findOneByUser(
+      req.user.email,
+    );
 
     const connector: Connector = store.connectors.find(
       ({ id }) => id === req.params.id,
@@ -154,7 +158,9 @@ export class ConnectorsController {
 
     const user = await response.data;
 
-    const store: Store = await this.storesService.findOneByUser(req.user.email);
+    const store: StoreConfig = await this.storesService.findOneByUser(
+      req.user.email,
+    );
 
     const connector: Connector = store.connectors.find(
       ({ id }) => id === 'facebook',

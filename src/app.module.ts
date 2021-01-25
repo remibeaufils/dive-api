@@ -10,6 +10,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ConnectorsModule } from './connectors/connectors.module';
+import { StoreConfigModule } from './store-config/store-config.module';
 import { StoresModule } from './stores/stores.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { StoresModule } from './stores/stores.module';
     UsersModule,
     ContextModule,
     ConnectorsModule,
+    StoreConfigModule,
     StoresModule,
   ],
   controllers: [AppController],

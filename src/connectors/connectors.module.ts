@@ -2,7 +2,7 @@ import { HttpModule, Module } from '@nestjs/common';
 import { ConnectorsController } from './connectors.controller';
 import { Connector, ConnectorSchema } from './schemas/connector.schema';
 import { MongooseModule } from '@nestjs/mongoose';
-import { StoresModule } from 'src/stores/stores.module';
+import { StoreConfigModule } from 'src/store-config/store-config.module';
 
 @Module({
   imports: [
@@ -10,7 +10,7 @@ import { StoresModule } from 'src/stores/stores.module';
     MongooseModule.forFeature([
       { name: Connector.name, schema: ConnectorSchema },
     ]),
-    StoresModule,
+    StoreConfigModule,
   ],
   controllers: [ConnectorsController],
 })

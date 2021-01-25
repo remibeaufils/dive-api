@@ -15,6 +15,13 @@ export class ShopifyService {
     // this.connection.useDb('r-pur');
     const createdOrder = new this.orderModel(createOrderDto);
     return createdOrder.save();
+
+    // results = await this.connection
+    //   .useDb('r_pur')
+    //   .collection('shopify-...')
+    //   .find()
+    //   .limit(2)
+    //   .toArray();
   }
 
   async findAll(): Promise<Order[]> {

@@ -1,7 +1,7 @@
 {
   "name": "dive-api",
   "version": "1.0.0",
-  "author": { "name" : "Rémi Beaufils", "email" : "remi.beaufils@gmail.com"},
+  "author": { "name": "Rémi Beaufils", "email": "remi.beaufils@gmail.com" },
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

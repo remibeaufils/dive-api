@@ -1,19 +1,18 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { Connector } from 'src/connectors/schemas/connector.schema';
 
 export type StoreDocument = Store & Document;
 
-@Schema()
+@Schema({ collection: 'stores' })
 export class Store {
   @Prop()
   id: string;
 
   @Prop()
-  merchantId: string;
+  merchant_id: string;
 
   @Prop()
-  connectors: Connector[];
+  sources: any[];
 }
 
 export const StoreSchema = SchemaFactory.createForClass(Store);
