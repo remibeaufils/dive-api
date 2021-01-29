@@ -1,37 +1,50 @@
 import { Controller, Get, Request, UseGuards } from '@nestjs/common';
-import { endOfMonth, parseISO, startOfMonth } from 'date-fns';
+import { endOfDay, parseISO } from 'date-fns';
+import { toDate, utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 import { LineItemDocument } from 'src/shopify/schemas/line-item.schema';
 import { StoresService } from 'src/stores/stores.service';
 import { ContextService } from './context.service';
 
 @Controller('context')
 export class ContextController {
-  private DEFAULT_DAY_FROM = new Date(2016, 0, 1);
-  private DEFAULT_DAY_TO = new Date();
-
   constructor(
     private readonly contextService: ContextService,
     private readonly storesService: StoresService,
   ) {}
 
+  @Public()
+  @Get('ranges')
+  async getRanges(): Promise<any> {
+    return this.contextService.test_ranges();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('dashboard')
   async getDashboard(@Request() req): Promise<LineItemDocument> {
-    const { from, to } = req.query;
-
-    const dayFrom = from ? parseISO(from) : this.DEFAULT_DAY_FROM;
-    const dayTo = to ? parseISO(to) : this.DEFAULT_DAY_TO;
-
-    // console.log(dayFrom, dayTo);
-
-    const data = await this.contextService.dashboard(dayFrom, dayTo);
-
     const store = await this.storesService.findOne('r-pur');
 
     const { currency, iana_timezone: timezone } = store.sources.find(
       ({ name }) => name === 'shopify',
     ).shop;
+
+    const DEFAULT_DAY_FROM = toDate('2016-01-01', {
+      timeZone: timezone,
+    });
+
+    const now = new Date();
+
+    let DEFAULT_DAY_TO = utcToZonedTime(now, timezone);
+    DEFAULT_DAY_TO = endOfDay(DEFAULT_DAY_TO);
+    DEFAULT_DAY_TO = zonedTimeToUtc(DEFAULT_DAY_TO, timezone);
+
+    const from = req.query.from ? parseISO(req.query.from) : DEFAULT_DAY_FROM;
+    const to = req.query.to ? parseISO(req.query.to) : DEFAULT_DAY_TO;
+
+    // console.log(from, to);
+
+    const data = await this.contextService.dashboard('r-pur', from, to);
 
     return { ...data, currency, timezone };
   }
