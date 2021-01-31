@@ -17,7 +17,7 @@ export class ShopifyService {
     return createdOrder.save();
 
     // results = await this.connection
-    //   .useDb('r_pur')
+    //   .useDb('dive')
     //   .collection('shopify-...')
     //   .find()
     //   .limit(2)

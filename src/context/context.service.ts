@@ -9,20 +9,19 @@ import {
 
 type Serie = {
   data: { x: string; y: number }[];
+  evolution?: string;
+  title?: { x: string; y: string };
   total?: number;
+  types: string;
   temp_1?: number;
   temp_2?: number;
-  total_f?: string;
-  first?: number;
-  last?: number;
-  evolution?: string;
 };
 
-// type Series = { [name: string]: { x: string; y: number }[] };
 type Series = { [name: string]: Serie };
 
-type DataRow = {
+type Row = {
   _id: { period_type: string; period_start: Date };
+  period: string;
   turnover: number;
   ad_spend: number;
   purchases_total: number;
@@ -31,9 +30,9 @@ type DataRow = {
   cpa: number;
   orders_count: number;
   orders_avg_value: number;
-  topCountry: string;
-  conversionRate: number;
-  abandonmentRate: number;
+  top_country: string;
+  conversion_rate: number;
+  abandonment_rate: number;
   vat: number;
   quantity: number;
   profit: number;
@@ -42,44 +41,6 @@ type DataRow = {
 
 @Injectable()
 export class ContextService {
-  private dateFormatter = new Intl.DateTimeFormat('en-US', {
-    day: 'numeric',
-    month: 'long',
-    weekday: 'long',
-    year: 'numeric',
-    timeZone: 'Europe/Paris',
-    // timeZoneName: 'short',
-  });
-
-  private monthFormatter = new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'Europe/Paris',
-  });
-
-  private yearFormatter = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    timeZone: 'Europe/Paris',
-  });
-
-  private currencyFormatter = new Intl.NumberFormat('en-US', {
-    currency: 'EUR',
-    // @ts-ignore https://github.com/microsoft/TypeScript/pull/40709
-    // notation: 'compact',
-    currencyDisplay: 'symbol',
-    minimumFractionDigits: 2,
-    style: 'currency',
-  });
-
-  private numberFormatter = new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 2,
-  });
-
-  private percentFormatter = new Intl.NumberFormat('en-US', {
-    style: 'percent',
-    maximumFractionDigits: 2,
-  });
-
   constructor(
     @InjectModel(LineItem.name) private lineItemModel: Model<LineItemDocument>,
   ) {}
@@ -216,6 +177,106 @@ export class ContextService {
       ])
       .exec();
 
+    if (!lines.length) {
+      return {
+        data: null,
+        from: dayFrom,
+        to: dayTo,
+      };
+    }
+
+    const period: string = lines[0]._id.period_type;
+
+    const initialData = {
+      data1: {
+        sizes: { xs: 24, sm: 12, md: 8, xl: 6 },
+        type: 'area',
+        types: { x: period, y: 'currency' },
+        title: 'Total Revenue',
+        evolution: lines[0].turnover
+          ? (lines[lines.length - 1].turnover - lines[0].turnover) /
+            lines[0].turnover
+          : null,
+        data: [],
+        total: 0,
+      },
+      data2: {
+        sizes: { xs: 24, sm: 12, md: 8, xl: 6 },
+        type: 'column',
+        title: 'Adspend (global)',
+        types: { x: period, y: 'currency' },
+        evolution: lines[0].ad_spend
+          ? (lines[lines.length - 1].ad_spend - lines[0].ad_spend) /
+            lines[0].ad_spend
+          : null,
+        data: [],
+        total: 0,
+      },
+      data3: {
+        sizes: { xs: 24, sm: 12, md: 8, xl: 6 },
+        type: 'line',
+        title: 'ROAS',
+        types: { x: period, y: 'number' },
+        evolution: lines[0].roas
+          ? (lines[lines.length - 1].roas - lines[0].roas) / lines[0].roas
+          : null,
+        data: [],
+        temp_1: 0,
+        temp_2: 0,
+      },
+      data4: {
+        sizes: { xs: 24, sm: 12, md: 8, xl: 6 },
+        type: 'line',
+        title: 'CPA',
+        types: { x: period, y: 'number' },
+        evolution: lines[0].cpa
+          ? (lines[lines.length - 1].cpa - lines[0].cpa) / lines[0].cpa
+          : null,
+        data: [],
+        temp_1: 0,
+        temp_2: 0,
+      },
+      data5: {
+        types: {
+          period,
+          turnover: 'currency',
+          orders_count: 'number',
+          ad_spend: 'currency',
+          roas: 'number',
+          cpa: 'number',
+        },
+        columns: this.getColumns(),
+        data: [],
+      },
+      data6: {
+        sizes: { xs: 24, sm: 12, md: 8, xl: 6 },
+        type: 'column',
+        title: 'Total Orders',
+        types: { x: period, y: 'number' },
+        evolution: lines[0].orders_count
+          ? (lines[lines.length - 1].orders_count - lines[0].orders_count) /
+            lines[0].orders_count
+          : null,
+        data: [],
+        total: 0,
+      },
+      data7: {
+        sizes: { xs: 24, sm: 12, md: 8, xl: 6 },
+        type: 'area',
+        title: 'Average Order Value',
+        types: { x: period, y: 'currency' },
+        evolution: lines[0].orders_avg_value
+          ? (lines[lines.length - 1].orders_avg_value -
+              lines[0].orders_avg_value) /
+            lines[0].orders_avg_value
+          : null,
+        data: [],
+        total: 0,
+      },
+      data8: { title: 'Conversion Rate', data: [], total: 0, evolution: 0 },
+      data9: { title: 'Abandonment Rate', data: [], total: 0, evolution: 0 },
+    };
+
     const { data1, data2, data3, data4, data5, data6, data7, data8, data9 } = (
       lines || []
     ).reduce(
@@ -231,7 +292,7 @@ export class ContextService {
           data8,
           data9,
         }: Series,
-        dataRow: DataRow,
+        row: Row,
         index: number,
       ) => {
         const {
@@ -244,138 +305,68 @@ export class ContextService {
           cpa,
           orders_count,
           orders_avg_value,
-          conversionRate,
-          abandonmentRate,
-        } = dataRow;
+          conversion_rate,
+          abandonment_rate,
+        } = row;
         return {
           data1: {
             ...data1,
             data: [...data1.data, { x: _id.period_start, y: turnover }],
             total: data1.total + turnover,
-            total_f: this.currencyFormatter.format(data1.total + turnover),
-            evolution: this.percentFormatter.format(
-              (lines[lines.length - 1].turnover - lines[0].turnover) /
-                lines[0].turnover,
-            ),
           },
           data2: {
             ...data2,
             data: [...data2.data, { x: _id.period_start, y: ad_spend }],
             total: data2.total + ad_spend,
-            total_f: this.currencyFormatter.format(data2.total + ad_spend),
-            evolution: lines[0].ad_spend
-              ? this.percentFormatter.format(
-                  (lines[lines.length - 1].ad_spend - lines[0].ad_spend) /
-                    lines[0].ad_spend,
-                )
-              : data2.evolution,
           },
           data3: {
             ...data3,
             data: [...data3.data, { x: _id.period_start, y: roas }],
             temp_1: data3.temp_1 + ad_spend,
             temp_2: data3.temp_2 + purchases_value_total,
-            total_f:
+            total:
               data3.temp_1 + ad_spend
-                ? this.numberFormatter.format(
-                    (data3.temp_2 + purchases_value_total) /
-                      (data3.temp_1 + ad_spend),
-                  )
+                ? (data3.temp_2 + purchases_value_total) /
+                  (data3.temp_1 + ad_spend)
                 : null,
-            evolution: lines[0].roas
-              ? this.percentFormatter.format(
-                  (lines[lines.length - 1].roas - lines[0].roas) /
-                    lines[0].roas,
-                )
-              : data3.evolution,
           },
           data4: {
             ...data4,
             data: [...data4.data, { x: _id.period_start, y: cpa }],
             temp_1: data4.temp_1 + purchases_total,
             temp_2: data4.temp_2 + ad_spend,
-            total_f:
-              data4.temp_1 + purchases_total
-                ? this.numberFormatter.format(
-                    (data4.temp_2 + ad_spend) /
-                      (data4.temp_1 + purchases_total),
-                  )
-                : null,
-            evolution: lines[0].cpa
-              ? this.percentFormatter.format(
-                  (lines[lines.length - 1].cpa - lines[0].cpa) / lines[0].cpa,
-                )
-              : data4.evolution,
+            total: (data4.temp_2 + ad_spend) / (data4.temp_1 + purchases_total),
           },
           data5: {
             ...data5,
             data: [
-              ...data5.data,
               {
-                ...dataRow,
-                period_f:
-                  dataRow._id.period_type === 'year'
-                    ? `Year ${this.yearFormatter.format(_id.period_start)}`
-                    : _id.period_type === 'month'
-                    ? this.monthFormatter.format(dataRow._id.period_start)
-                    : _id.period_type === 'week'
-                    ? `Week of ${this.dateFormatter
-                        .format(_id.period_start)
-                        .replace(/,/g, '')}`
-                    : this.dateFormatter.format(dataRow._id.period_start),
-                turnover_f: this.currencyFormatter.format(turnover),
-                orders_count_f: this.numberFormatter.format(orders_count),
-                ad_spend_f: ad_spend
-                  ? this.currencyFormatter.format(ad_spend)
-                  : null,
-                cpa_f: cpa ? this.currencyFormatter.format(cpa) : null,
-                roas_f: roas ? this.numberFormatter.format(roas) : null,
+                ...row,
+                period: row._id.period_start,
+                key: index,
               },
+              ...data5.data,
             ],
           },
           data6: {
             ...data6,
             data: [...data6.data, { x: _id.period_start, y: orders_count }],
             total: data6.total + orders_count,
-            total_f: this.numberFormatter.format(data6.total + orders_count),
-            evolution: this.percentFormatter.format(
-              (lines[lines.length - 1].orders_count - lines[0].orders_count) /
-                lines[0].orders_count,
-            ),
           },
           data7: {
             ...data7,
             data: [...data7.data, { x: _id.period_start, y: orders_avg_value }],
             total: (data1.total + turnover) / (data6.total + orders_count),
-            total_f: this.currencyFormatter.format(
-              (data1.total + turnover) / (data6.total + orders_count),
-            ),
-            evolution: this.percentFormatter.format(
-              (lines[lines.length - 1].orders_avg_value -
-                lines[0].orders_avg_value) /
-                lines[0].orders_avg_value,
-            ),
           },
-          // data8: [ ...data8, { x: month, y: conversionRate } ],
-          // data9: [ ...data9, { x: month, y: abandonmentRate } ],
+          // data8: [ ...data8, { x: month, y: conversion_rate } ],
+          // data9: [ ...data9, { x: month, y: abandonment_rate } ],
         };
       },
-      {
-        data1: { data: [], total: 0, evolution: '0' },
-        data2: { data: [], total: 0, evolution: '0' },
-        data3: { data: [], temp_1: 0, temp_2: 0, evolution: '0' },
-        data4: { data: [], temp_1: 0, temp_2: 0, evolution: '0' },
-        data5: { data: [] },
-        data6: { data: [], total: 0, evolution: '0' },
-        data7: { data: [], total: 0, evolution: '0' },
-        data8: { data: [], total: 0, evolution: '0' },
-        data9: { data: [], total: 0, evolution: '0' },
-      },
+      initialData,
     );
 
     return {
       data: { data1, data2, data3, data4, data5, data6, data7 },
-      columns: this.getColumns(),
       from: dayFrom,
       to: dayTo,
     };
@@ -407,37 +398,37 @@ export class ContextService {
         title: 'Period',
         width: 300,
         // dataIndex: ['_id', 'period_start'],
-        dataIndex: 'period_f',
+        dataIndex: 'period',
         align: 'center',
       },
       {
         title: 'Turnover\n(VAT excluded)',
         width: 100,
-        dataIndex: 'turnover_f',
+        dataIndex: 'turnover',
         align: 'right',
       },
       {
         title: 'Quantity',
         width: 100,
-        dataIndex: 'orders_count_f',
+        dataIndex: 'orders_count',
         align: 'right',
       },
       {
         title: 'AdSpend',
         width: 100,
-        dataIndex: 'ad_spend_f',
+        dataIndex: 'ad_spend',
         align: 'right',
       },
       {
         title: 'ROAS',
         width: 100,
-        dataIndex: 'roas_f',
+        dataIndex: 'roas',
         align: 'right',
       },
       {
         title: 'CPA',
         width: 100,
-        dataIndex: 'cpa_f',
+        dataIndex: 'cpa',
         align: 'right',
       },
       // {
